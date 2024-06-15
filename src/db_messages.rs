@@ -14,4 +14,9 @@ pub struct CreateMessage {
     pub datetime: NaiveDateTime,
 }
 
+#[derive(ActixMessage, Debug)]
+#[rtype(result = "QueryResult<Vec<Message>>")]
+pub struct GetMessagesByRoom {
+    pub room_id: String,
+}
   

@@ -1,6 +1,6 @@
 use std::fmt::format;
 
-use crate::db_messages::CreateMessage;
+use crate::db_messages::*;
 use crate::db_utils::DbActor;
 use crate::insertables::CreateMessageExternalApi;
 use crate::insertables::NewMessage;
@@ -41,30 +41,51 @@ impl Handler<CreateMessage> for DbActor {
         if let Err(err) = reult_inser {
             println!("Error inserting message: {:?}", err);
         }
-   
-   
+
         let result: Result<Message, diesel::result::Error> =
             messages.order(message_id.desc()).first(&mut conn);
 
-         let room = msg.receiver.clone();
+        let room = msg.receiver.clone();
 
-         let new_external_message = CreateMessageExternalApi {
-             message_id: result.as_ref().unwrap().id,
-         };
+        let new_external_message = CreateMessageExternalApi {
+            message_id: result.as_ref().unwrap().id,
+        };
 
-         let client = reqwest::blocking::Client::new();
-         let response = client
-             .put(format!("http://localhost:8080/create_message/{}", room).as_str())
-             .json(&new_external_message)
-             .send()
-             .expect("Error sending POST request to external app");
+        let client = reqwest::blocking::Client::new();
+        let response = client
+            .put(format!("http://localhost:8080/create_message/{}", room).as_str())
+            .json(&new_external_message)
+            .send()
+            .expect("Error sending POST request to external app");
 
-         if response.status().is_success() {
-             println!("Message successfully sent to external app");
-         } else {
-             println!("Failed to send message to external app: {:?}", response);
-         }
+        if response.status().is_success() {
+            println!("Message successfully sent to external app");
+        } else {
+            println!("Failed to send message to external app: {:?}", response);
+        }
 
         result
+    }
+}
+
+impl Handler<GetMessagesByRoom> for DbActor {
+    type Result = QueryResult<Vec<Message>>;
+
+    fn handle(
+        &mut self,
+        msg: GetMessagesByRoom,
+        _: &mut Self::Context,
+    ) -> QueryResult<Vec<Message>> {
+        let mut conn = self
+            .0
+            .get()
+            .expect("Get messages by room: Error connecting to database");
+
+        let messages_result = messages
+            .filter(receiver.eq(&msg.room_id))
+            .load::<Message>(&mut conn);
+
+    
+        messages_result
     }
 }

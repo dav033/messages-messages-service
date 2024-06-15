@@ -1,9 +1,14 @@
-use actix_web::{post, web, Error, HttpResponse, Responder};
 
 use actix::Addr;
-
-use crate::{db_messages::CreateMessage, AppState, DbActor};
+use actix_web::{
+    get, post, put, web,
+    web::{Data, Json, Path},
+    Error, HttpRequest, HttpResponse, Responder,
+};
 use serde::Deserialize;
+
+
+use crate::{db_messages::*, AppState, DbActor};
 
 #[derive(Deserialize)]
 pub struct CreateMessageBody {
@@ -27,6 +32,32 @@ pub async fn send_messages(
             sender: body.sender.clone(),
             receiver: body.receiver.clone(),
             datetime: chrono::Utc::now().naive_utc(),
+        })
+        .await
+    {
+        Ok(Ok(info)) => HttpResponse::Ok().json(info),
+        Ok(Err(e)) => {
+            eprintln!("Database error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to get user rooms")
+        }
+        Err(e) => {
+            eprintln!("Mailbox error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to send message to database")
+        }
+    }
+}
+
+#[get("/messages/{room_id}")]
+pub async fn get_messages_by_room(
+    state: web::Data<AppState>,
+    room_id: Path<i32>,
+) -> impl Responder {
+    let db: Addr<DbActor> = state.db.clone();
+
+
+    match db
+        .send(GetMessagesByRoom {
+            room_id: room_id.into_inner().to_string(),
         })
         .await
     {
