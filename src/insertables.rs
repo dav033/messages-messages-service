@@ -10,6 +10,7 @@ pub struct NewMessage {
     pub datetime: String,
     pub sender: String,
     pub receiver: String,
+    pub readed: String,
 }
 
 #[derive(Serialize, Clone)]

@@ -14,7 +14,7 @@ use diesel::{
     MysqlConnection,
 };
 use actix_web::{App, HttpServer};
-use services::{get_messages_by_room, send_messages};
+use services::*;
 use db_utils::{get_pool, AppState, DbActor};
 use actix_cors::Cors;
 
@@ -48,6 +48,9 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .service(send_messages)
             .service(get_messages_by_room)
+            .service(get_unreaded_messages_by_room)
+            .service(get_last_message_by_room)
+            .service(get_messages_room_information)
     })
     .bind(("127.0.0.1", 8082))?
     .run()

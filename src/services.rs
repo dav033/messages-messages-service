@@ -1,4 +1,3 @@
-
 use actix::Addr;
 use actix_web::{
     get, post, put, web,
@@ -6,7 +5,6 @@ use actix_web::{
     Error, HttpRequest, HttpResponse, Responder,
 };
 use serde::Deserialize;
-
 
 use crate::{db_messages::*, AppState, DbActor};
 
@@ -32,6 +30,7 @@ pub async fn send_messages(
             sender: body.sender.clone(),
             receiver: body.receiver.clone(),
             datetime: chrono::Utc::now().naive_utc(),
+            readed: body.receiver.clone(),
         })
         .await
     {
@@ -53,12 +52,78 @@ pub async fn get_messages_by_room(
     room_id: Path<i32>,
 ) -> impl Responder {
     let db: Addr<DbActor> = state.db.clone();
+    let room_id = room_id.into_inner();
 
+    match db.send(GetMessagesByRoom { room_id }).await {
+        Ok(Ok(info)) => HttpResponse::Ok().json(info),
+        Ok(Err(e)) => {
+            eprintln!("Database error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to get user rooms")
+        }
+        Err(e) => {
+            eprintln!("Mailbox error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to send message to database")
+        }
+    }
+}
+
+#[get("/messages/{room_id}/unreaded/{user_id}")]
+pub async fn get_unreaded_messages_by_room(
+    state: web::Data<AppState>,
+    path: Path<(i32, i32)>,
+) -> impl Responder {
+    let db: Addr<DbActor> = state.db.clone();
+
+    let (room_id, user_id) = path.into_inner();
 
     match db
-        .send(GetMessagesByRoom {
-            room_id: room_id.into_inner().to_string(),
-        })
+        .send(GetUnreadedMessagesByRoom { room_id, user_id })
+        .await
+    {
+        Ok(Ok(info)) => HttpResponse::Ok().json(info),
+        Ok(Err(e)) => {
+            eprintln!("Database error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to get user rooms")
+        }
+        Err(e) => {
+            eprintln!("Mailbox error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to send message to database")
+        }
+    }
+}
+
+#[get("/messages/{room_id}/last")]
+pub async fn get_last_message_by_room(
+    state: web::Data<AppState>,
+    room_id: Path<i32>,
+) -> impl Responder {
+    let db: Addr<DbActor> = state.db.clone();
+    let room_id = room_id.into_inner();
+
+    match db.send(GetLastMessageByRoom { room_id }).await {
+        Ok(Ok(info)) => HttpResponse::Ok().json(info),
+        Ok(Err(e)) => {
+            eprintln!("Database error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to get user rooms")
+        }
+        Err(e) => {
+            eprintln!("Mailbox error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to send message to database")
+        }
+    }
+}
+
+#[get("/messages/{room_id}/info/{user_id}")]
+pub async fn get_messages_room_information(
+    state: Data<AppState>,
+    path: Path<(i32, i32)>,
+) -> impl Responder {
+    let db: Addr<DbActor> = state.db.clone();
+
+    let (room_id, user_id) = path.into_inner();
+
+    match db
+        .send(GetMessagesRoomInformation { room_id, user_id })
         .await
     {
         Ok(Ok(info)) => HttpResponse::Ok().json(info),
