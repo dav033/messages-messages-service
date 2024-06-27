@@ -40,3 +40,11 @@ pub struct GetMessagesRoomInformation {
     pub room_id: i32,
     pub user_id: i32,
 }
+
+
+#[derive(ActixMessage, Debug)]
+#[rtype(result = "QueryResult<()>")]
+pub struct SetReaded {
+    pub room_id: i32,
+    pub user_id: i32,
+}

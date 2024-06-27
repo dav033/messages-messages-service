@@ -196,3 +196,23 @@ impl Handler<GetMessagesRoomInformation> for DbActor {
         })
     }
 }
+
+impl Handler<SetReaded> for DbActor {
+    type Result = QueryResult<()>;
+
+    fn handle(&mut self, msg: SetReaded, _: &mut Self::Context) -> Self::Result {
+        let mut conn = self
+            .0
+            .get()
+            .expect("Set readed: Error connecting to database");
+
+        diesel::update(
+            messages
+                .filter(receiver.like(format!("%{}%", msg.room_id)))
+                .filter(readed.not_like(format!("%{}%", msg.user_id))),
+        )
+        .set(readed.eq(msg.user_id.to_string()))
+        .execute(&mut conn)
+        .map(|_| ())
+    }
+}

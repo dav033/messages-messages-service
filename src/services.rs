@@ -137,3 +137,22 @@ pub async fn get_messages_room_information(
         }
     }
 }
+
+#[put("/messages/set_readed/{room_id}/{user_id}")]
+pub async fn set_readed(state: Data<AppState>, path: Path<(i32, i32)>) -> impl Responder {
+    let db: Addr<DbActor> = state.db.clone();
+
+    let (room_id, user_id) = path.into_inner();
+
+    match db.send(SetReaded { room_id, user_id }).await {
+        Ok(Ok(info)) => HttpResponse::Ok().json(info),
+        Ok(Err(e)) => {
+            eprintln!("Database error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to get user rooms")
+        }
+        Err(e) => {
+            eprintln!("Mailbox error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to send message to database")
+        }
+    }
+}

@@ -51,6 +51,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_unreaded_messages_by_room)
             .service(get_last_message_by_room)
             .service(get_messages_room_information)
+            .service(set_readed)
     })
     .bind(("127.0.0.1", 8082))?
     .run()
