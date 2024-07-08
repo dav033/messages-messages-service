@@ -10,6 +10,7 @@ pub struct CreateMessage {
     pub body: String,
     pub typeM: String,
     pub sender: String,
+    pub sender_name: String,
     pub receiver: String,
     pub datetime: NaiveDateTime,
     pub readed: String,

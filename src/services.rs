@@ -13,6 +13,7 @@ pub struct CreateMessageBody {
     pub body: String,
     pub typeM: String,
     pub sender: String,
+    pub sender_name: String,
     pub receiver: String,
 }
 
@@ -28,6 +29,7 @@ pub async fn send_messages(
             body: body.body.clone(),
             typeM: body.typeM.clone(),
             sender: body.sender.clone(),
+            sender_name: body.sender_name.clone(),
             receiver: body.receiver.clone(),
             datetime: chrono::Utc::now().naive_utc(),
             readed: body.receiver.clone(),

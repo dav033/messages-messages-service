@@ -13,6 +13,7 @@ pub struct Message {
     pub typeM: String,
     pub datetime: String,
     pub sender: String,
+    pub sender_name: String,
     pub receiver: String,
     pub readed: String,
 }
@@ -23,6 +24,7 @@ pub struct MessageResponse {
     pub body: String,
     pub typeM: String,
     pub datetime: String,
+    pub sender_name: String,
     pub sender: String,
     pub receiver: String,
     pub readed: Vec<i32>,
@@ -53,6 +55,7 @@ impl From<Message> for MessageResponse {
             typeM: message.typeM,
             datetime: message.datetime,
             sender: message.sender,
+            sender_name: message.sender_name,
             receiver: message.receiver,
             readed: serde_json::from_str(&message.readed).unwrap_or_else(|_| vec![]),
         }

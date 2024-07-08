@@ -31,8 +31,9 @@ impl Handler<CreateMessage> for DbActor {
             typeM: msg.typeM,
             datetime: msg.datetime.format("%Y-%m-%d %H:%M:%S").to_string(),
             sender: msg.sender,
+            sender_name: msg.sender_name,
             receiver: msg.receiver.clone(),
-            readed: msg.readed.clone(),
+            readed: "[]".to_owned(),
         };
 
         println!("New message: {:?}", &new_message);
@@ -206,13 +207,25 @@ impl Handler<SetReaded> for DbActor {
             .get()
             .expect("Set readed: Error connecting to database");
 
-        diesel::update(
-            messages
-                .filter(receiver.like(format!("%{}%", msg.room_id)))
-                .filter(readed.not_like(format!("%{}%", msg.user_id))),
-        )
-        .set(readed.eq(msg.user_id.to_string()))
-        .execute(&mut conn)
-        .map(|_| ())
+        // Obtener los mensajes no leídos
+        let unreaded_messages = messages
+            .filter(receiver.like(format!("%{}%", msg.room_id)))
+            .filter(readed.not_like(format!("%{}%", msg.user_id)))
+            .load::<Message>(&mut conn)?;
+
+        // Actualizar la lista de leídos
+        for mut message in unreaded_messages {
+            let mut readed_list = message.get_readed();
+            if !readed_list.contains(&msg.user_id) {
+                readed_list.push(msg.user_id);
+                message.set_readed(readed_list);
+                diesel::update(messages.find(message.id))
+                    .set(readed.eq(message.readed))
+                    .execute(&mut conn)?;
+            }
+        }
+
+        Ok(())
     }
 }
+

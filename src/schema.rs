@@ -9,6 +9,8 @@ diesel::table! {
         #[max_length = 100]
         sender -> Varchar,
         #[max_length = 100]
+        sender_name -> Varchar,
+        #[max_length = 100]
         receiver -> Varchar,
         #[max_length = 2000]
         readed -> Varchar,
