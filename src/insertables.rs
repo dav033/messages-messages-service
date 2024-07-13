@@ -18,5 +18,3 @@ pub struct NewMessage {
 pub struct CreateMessageExternalApi {
     pub message_id: i32,
 }
-
-

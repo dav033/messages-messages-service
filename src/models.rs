@@ -37,6 +37,8 @@ pub struct MessagesRoomInformation {
     pub unreaded_messages: Vec<MessageResponse>,
 }
 
+
+
 impl Message {
     pub fn get_readed(&self) -> Vec<i32> {
         serde_json::from_str(&self.readed).unwrap_or_else(|_| vec![])

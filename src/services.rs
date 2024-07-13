@@ -17,6 +17,11 @@ pub struct CreateMessageBody {
     pub receiver: String,
 }
 
+#[derive(Deserialize)]
+pub struct UpdateMessagesUsernameBody {
+    pub username: String,
+}
+
 #[post("/messages")]
 pub async fn send_messages(
     state: web::Data<AppState>,
@@ -147,6 +152,35 @@ pub async fn set_readed(state: Data<AppState>, path: Path<(i32, i32)>) -> impl R
     let (room_id, user_id) = path.into_inner();
 
     match db.send(SetReaded { room_id, user_id }).await {
+        Ok(Ok(info)) => HttpResponse::Ok().json(info),
+        Ok(Err(e)) => {
+            eprintln!("Database error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to get user rooms")
+        }
+        Err(e) => {
+            eprintln!("Mailbox error: {}", e);
+            HttpResponse::InternalServerError().json("Failed to send message to database")
+        }
+    }
+}
+
+#[put("/messages/update_username/{user_id}")]
+pub async fn update_username(
+    state: Data<AppState>,
+    path: Path<i32>,
+    body: Json<UpdateMessagesUsernameBody>,
+) -> impl Responder {
+    let db: Addr<DbActor> = state.db.clone();
+
+    let user_id = path.into_inner();
+
+    match db
+        .send(UpdateMessagesUsername {
+            user_id,
+            username: body.into_inner().username,
+        })
+        .await
+    {
         Ok(Ok(info)) => HttpResponse::Ok().json(info),
         Ok(Err(e)) => {
             eprintln!("Database error: {}", e);

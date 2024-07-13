@@ -229,3 +229,22 @@ impl Handler<SetReaded> for DbActor {
     }
 }
 
+impl Handler<UpdateMessagesUsername> for DbActor {
+    type Result = QueryResult<()>;
+
+    //modificar solo los messages donde msg.user_id =  sender solo hacer esto nada mas
+
+    fn handle(&mut self, msg: UpdateMessagesUsername, _: &mut Self::Context) -> Self::Result {
+        let mut conn = self
+            .0
+            .get()
+            .expect("Update messages username: Error connecting to database");
+
+        diesel::update(messages)
+            .filter(sender.eq(msg.user_id.to_string()))
+            .set(sender_name.eq(msg.username.to_string()))
+            .execute(&mut conn)?;
+
+        Ok(())
+    }
+}
